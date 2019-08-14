@@ -1,5 +1,5 @@
-CLANG=../../build/bin/clang
-DIS=../../build/bin/llvm-dis
+CLANG=../build/bin/clang
+DIS=../build/bin/llvm-dis
 
 default: array.ll
 

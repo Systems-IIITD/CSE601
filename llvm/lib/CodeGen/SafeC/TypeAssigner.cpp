@@ -47,7 +47,7 @@ struct TypeAssigner : public FunctionPass {
 			assert(bitpos < 63 && "can not handle more than 63 fields!");
 			if (ValueVTs[i].isPointer())
 			{
-				bitmap |= (1 << bitpos);
+				bitmap |= (1ULL << bitpos); /* Fixed by Fahad Nayyar */
 			}
 		}
 
@@ -56,7 +56,7 @@ struct TypeAssigner : public FunctionPass {
 			auto Sz = DL.getTypeAllocSize(Ty);
 			assert((Sz & 7) == 0 && "type is not aligned!");
 			bitpos++;
-			bitmap |= (1 << bitpos);
+			bitmap |= (1ULL << bitpos); /* Fixed by Fahad Nayyar */
 		}
 		return bitmap;
 	}

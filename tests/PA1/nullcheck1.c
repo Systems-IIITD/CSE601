@@ -1,13 +1,6 @@
 #include <stdio.h>
 #include "support.h"
 
-/*
- * EXPECTED CHECKS
- * needed check before:   %arrayidx1 = getelementptr inbounds i32, i32* %3, i64 0
- * needed check before:   %arrayidx4 = getelementptr inbounds i32, i32* %7, i64 0
- * needed check before:   %arrayidx5 = getelementptr inbounds i32, i32* %8, i64 0
- */
-
 void foo (int *arr)
 {
 	int *ptr = mymalloc(4);

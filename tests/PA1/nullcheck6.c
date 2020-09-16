@@ -1,11 +1,6 @@
 #include <stdio.h>
 #include "support.h"
 
-/*
- * EXPECTED CHECKS
- * needed check before:   %call1 = call i32 %2(i32 1)
- */
-
 int bar (int a)
 {
 	return a;

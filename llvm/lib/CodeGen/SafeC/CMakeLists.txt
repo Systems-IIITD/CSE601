@@ -3,6 +3,7 @@ add_llvm_library ( LLVMCSE301 MODULE
 	NullChecks.cpp
 	TypeAssigner.cpp
 	TypeChecker.cpp
+	MemSafe.cpp
 	
   DEPENDS
   intrinsics_gen

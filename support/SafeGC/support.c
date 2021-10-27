@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <unistd.h>
 #include "memory.h"
 #include "support.h"
 
@@ -29,7 +30,28 @@ void checkSizeAndTypeInv(void *Src, unsigned long long DstType, unsigned DstSize
 
 void* mycast(void *Ptr, unsigned long long Bitmap, unsigned Size)
 {
-	checkSizeInv(Ptr, Size);
+	//checkSizeInv(Ptr, Size);
 	SetType(Ptr, Bitmap);
 	return Ptr;
+}
+
+void IsSafeToEscape(void *Base, void *Ptr)
+{
+}
+
+void BoundsCheck(void *Base, void *Ptr, size_t AccessSize)
+{
+}
+
+void BoundsCheckWithSize(void *RealBase, void *Ptr, size_t Size, size_t AccessSize)
+{
+}
+
+void WriteBarrier(void *Base, void *Ptr, size_t AccessSize)
+{
+}
+
+void WriteBarrierWithSize(void *RealBase, void *Ptr, size_t Size,
+	size_t AccessSize, unsigned long long Type)
+{
 }

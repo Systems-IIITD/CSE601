@@ -63,7 +63,8 @@ typedef struct SegmentList
 typedef struct ObjHeader
 {
 	unsigned Size;
-	unsigned Status;
+	unsigned short Status;
+	unsigned short Alignment;
 	ulong64 Type;
 } ObjHeader;
 
@@ -82,7 +83,7 @@ static char* getReservePtr(Segment *Seg) { return Seg->Other.ReservePtr; }
 static char* getDataPtr(Segment *Seg) { return Seg->Other.DataPtr; }
 static void setBigAlloc(Segment *Seg, int BigAlloc) { Seg->Other.BigAlloc = BigAlloc; }
 static int getBigAlloc(Segment *Seg) { return Seg->Other.BigAlloc; }
-static void myfree(void *Ptr);
+//static void myfree(void *Ptr);
 static void checkAndRunGC();
 
 static void addToSegmentList(Segment *Seg)
@@ -173,6 +174,7 @@ static void createHole(Segment *Seg)
 		ObjHeader *Header = (ObjHeader*)AllocPtr;
 		Header->Size = HoleSz;
 		Header->Status = 0;
+		Header->Alignment = 0;
 		setAllocPtr(Seg, CommitPtr);
 		myfree(AllocPtr + OBJ_HEADER_SIZE);
 		NumBytesFreed -= HoleSz;
@@ -199,7 +201,7 @@ static void reclaimMemory(void *Ptr, size_t Size)
 }
 
 /* used by the GC to free objects. */
-static void myfree(void *Ptr)
+void myfree(void *Ptr)
 {
 	ObjHeader *Header = (ObjHeader*)((char*)Ptr - OBJ_HEADER_SIZE);
 	assert((Header->Status & FREE) == 0);
@@ -262,6 +264,7 @@ static void* BigAlloc(size_t Size)
 	ObjHeader *Header = (ObjHeader*)AllocPtr;
 	Header->Size = AlignedSize;
 	Header->Status = 0;
+	Header->Alignment = 0;
 	Header->Type = 0;
 	return AllocPtr + OBJ_HEADER_SIZE;
 }
@@ -312,6 +315,7 @@ void *_mymalloc(size_t Size)
 	ObjHeader *Header = (ObjHeader*)AllocPtr;
 	Header->Size = AlignedSize;
 	Header->Status = 0;
+	Header->Alignment = 0;
 	Header->Type = 0;
 	return AllocPtr + OBJ_HEADER_SIZE;
 }
@@ -500,4 +504,16 @@ void SetType(void *Obj, unsigned long long Type)
 {
 	ObjHeader *Header = ObjToHeader(Obj);
 	Header->Type = Type;
+}
+
+void* GetAlignedAddr(void *Addr, size_t Alignment)
+{
+	ObjHeader *Header = ObjToHeader(Addr);
+	Header->Alignment = Alignment;
+	return (void*)Align((size_t)(Addr), Alignment);
+}
+
+int readArgv(const char* argv[], int idx)
+{
+	return atoi(argv[idx]);
 }

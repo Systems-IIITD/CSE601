@@ -64,37 +64,44 @@ struct TypeAssigner : public FunctionPass {
   bool runOnFunction(Function &F) override {
 
 		const DataLayout &DL = F.getParent()->getDataLayout();
+		auto Int8PtrTy = Type::getInt8PtrTy(F.getParent()->getContext());
 
 		for (BasicBlock &BB : F)
 		{
 			for (Instruction &II : BB)
 			{
 				CallInst *CI = dyn_cast<CallInst>(&II);
-				if (CI && CI->getType()->isPointerTy())
+				if (CI && CI->getType()->isPointerTy() && CI->getCalledValue())
 				{
-					Function *Callee = CI->getCalledFunction();
+					auto *Callee = CI->getCalledValue()->stripPointerCasts();
 
-					if (Callee && !Callee->getName().compare("mymalloc"))
+					if (!Callee->getName().compare("mymalloc"))
 					{
-						Instruction *Next = II.getNextNode();
-						if (isa<CastInst>(Next) && 
-								Next->getType()->isPointerTy() && 
-								Next->getOperand(0) == CI)
-						{
-							auto PTy = Next->getType()->getPointerElementType();
-							auto ObjSz = DL.getTypeAllocSize(PTy);
-							unsigned long long bitmap = computeBitMap(DL, PTy);
-
-							IRBuilder<> IRB(Next);
-							Module *M = F.getParent();
-    					auto Int64Ty = IRB.getInt64Ty();
-    					auto Int32Ty = IRB.getInt32Ty();
-							auto Fn = M->getOrInsertFunction("mycast", Next->getType(), IRB.getInt8PtrTy(), Int64Ty, Int32Ty);
-							auto CastCall = IRB.CreateCall(Fn, {CI, ConstantInt::get(Int64Ty, bitmap), ConstantInt::get(Int32Ty, ObjSz)});
-							Next->replaceAllUsesWith(CastCall);
-							assert(Next->use_empty());
-							Next->eraseFromParent();
+						Instruction *InsertPt = CI;
+						if (CI->getType() == Int8PtrTy) {
+    					for (const Use &UI : CI->uses()) {
+      					auto I = cast<Instruction>(UI.getUser());
+								if (isa<BitCastInst>(I)) {
+									InsertPt = I;
+									break;
+								}
+							}
 						}
+						assert(InsertPt->getType()->isPointerTy());
+						
+						Type *PTy = InsertPt->getType()->getPointerElementType();
+						if (PTy->isArrayTy()) {
+							PTy = PTy->getArrayElementType();
+						}
+						auto ObjSz = DL.getTypeAllocSize(PTy);
+						unsigned long long bitmap = computeBitMap(DL, PTy);
+
+						IRBuilder<> IRB(InsertPt->getNextNode());
+						Module *M = F.getParent();
+    				auto Int64Ty = IRB.getInt64Ty();
+    				auto Int32Ty = IRB.getInt32Ty();
+						auto Fn = M->getOrInsertFunction("mycast", InsertPt->getType(), CI->getType(), Int64Ty, Int32Ty);
+						IRB.CreateCall(Fn, {CI, ConstantInt::get(Int64Ty, bitmap), ConstantInt::get(Int32Ty, ObjSz)});
 					}
 				}
 			}
